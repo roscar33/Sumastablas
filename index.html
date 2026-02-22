@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Docente - Sede Santa Juana</title>
+    <!-- Librerías para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #2575fc;
+            --secondary: #4facfe;
+            --danger: #ef5350;
+            --success: #66bb6a;
+            --dark: #333;
+            --light: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 { font-size: 1.5rem; color: var(--primary); }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-refresh { background: var(--primary); color: white; }
+        .btn-pdf { background: var(--dark); color: white; }
+        .btn-danger { background: var(--danger); color: white; font-size: 0.8rem; padding: 6px 12px; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .stat-card h3 { font-size: 0.8rem; text-transform: uppercase; color: #777; }
+        .stat-card p { font-size: 1.5rem; font-weight: bold; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background: var(--light);
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #eee;
+            color: #555;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        tr:hover { background-color: #fafafa; }
+
+        .actions { display: flex; gap: 5px; }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .badge-tabla {
+            background: #e3f2fd;
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .stars-val { color: #f57c00; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Panel de Control Docente</h1>
+            <p style="color: #888; font-size: 0.85rem;">Seguimiento Estrellas Matemáticas - Sede Santa Juana</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-refresh" id="btnSync">🔄 Sincronizar</button>
+            <button class="btn btn-pdf" id="btnPDF">📄 Descargar PDF</button>
+        </div>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Registros</h3>
+            <p id="stat-total">0</p>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--success);">
+            <h3>Promedio Estrellas</h3>
+            <p id="stat-avg">0.0</p>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--amarillo);">
+            <h3>Participantes</h3>
+            <p id="stat-students">0</p>
+        </div>
+    </div>
+
+    <div id="loading" class="loader">Cargando datos de Firebase...</div>
+
+    <div style="overflow-x: auto;">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Estudiante</th>
+                    <th>Documento</th>
+                    <th>Tabla</th>
+                    <th>Estrellas</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Se llena con JS -->
+            </tbody>
+        </table>
+        <div id="emptyMsg" class="empty-state">No hay registros guardados en la colección SUMASTABLAS.</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB8BZNYGCSHTZuGir8wIBArqdI8PpXffBA",
+        authDomain: "juegosymas-ad2b3.firebaseapp.com",
+        projectId: "juegosymas-ad2b3",
+        storageBucket: "juegosymas-ad2b3.firebasestorage.app",
+        messagingSenderId: "363026419869",
+        appId: "1:363026419869:web:0a7ae4cb6b0a30050a0474"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const appId = 'santa-juana-sumas-final-v1'; // Debe coincidir con el del juego
+
+    let dataCache = [];
+
+    // Autenticación para acceder a Firestore
+    signInAnonymously(auth).then(() => fetchData()).catch(console.error);
+
+    document.getElementById('btnSync').onclick = fetchData;
+    document.getElementById('btnPDF').onclick = exportPDF;
+
+    async function fetchData() {
+        const body = document.getElementById('tableBody');
+        const loader = document.getElementById('loading');
+        const empty = document.getElementById('emptyMsg');
+
+        body.innerHTML = '';
+        loader.style.display = 'block';
+        empty.style.display = 'none';
+
+        try {
+            // Regla 1: Ruta absoluta. Colección SUMASTABLAS
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'SUMASTABLAS');
+            const snap = await getDocs(colRef);
+            
+            dataCache = [];
+            snap.forEach(d => {
+                dataCache.push({ id: d.id, ...d.data() });
+            });
+
+            // Ordenar por fecha (descendente) en memoria - Regla 2
+            dataCache.sort((a, b) => b.fecha?.seconds - a.fecha?.seconds);
+
+            loader.style.display = 'none';
+            
+            if (dataCache.length === 0) {
+                empty.style.display = 'block';
+                updateStats(0, 0, 0);
+                return;
+            }
+
+            let totalStars = 0;
+            const uniqueStudents = new Set();
+
+            dataCache.forEach(item => {
+                totalStars += item.estrellas || 0;
+                uniqueStudents.add(item.documento);
+
+                const row = document.createElement('tr');
+                const fecha = item.fecha ? new Date(item.fecha.seconds * 1000).toLocaleString() : '---';
+                
+                row.innerHTML = `
+                    <td><strong>${item.estudiante}</strong></td>
+                    <td>${item.documento}</td>
+                    <td><span class="badge-tabla">Tabla ${item.tabla}</span></td>
+                    <td><span class="stars-val">✨ ${item.estrellas.toFixed(1)}</span></td>
+                    <td style="color: #666; font-size: 0.8rem;">${fecha}</td>
+                    <td class="actions">
+                        <button class="btn btn-danger" onclick="window.resetTable('${item.id}')">Borrar Registro</button>
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+
+            updateStats(dataCache.length, (totalStars / dataCache.length).toFixed(1), uniqueStudents.size);
+
+        } catch (e) {
+            console.error(e);
+            loader.style.display = 'none';
+            alert("Error al obtener datos. Revisa la conexión.");
+        }
+    }
+
+    function updateStats(total, avg, students) {
+        document.getElementById('stat-total').innerText = total;
+        document.getElementById('stat-avg').innerText = avg;
+        document.getElementById('stat-students').innerText = students;
+    }
+
+    // Función global para que el botón de la tabla la vea
+    window.resetTable = async function(docId) {
+        if (!confirm("¿Seguro que quieres borrar este registro? El estudiante tendrá que repetir esta tabla.")) return;
+        
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'SUMASTABLAS', docId);
+            await deleteDoc(docRef);
+            fetchData(); // Recargar
+        } catch (e) {
+            alert("Error al borrar registro.");
+        }
+    };
+
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text("Reporte de Resultados - Sede Santa Juana", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
+
+        const tableData = dataCache.map(item => [
+            item.estudiante,
+            item.documento,
+            `Tabla ${item.tabla}`,
+            item.estrellas.toFixed(1),
+            item.fecha ? new Date(item.fecha.seconds * 1000).toLocaleDateString() : '---'
+        ]);
+
+        doc.autoTable({
+            startY: 35,
+            head: [['Estudiante', 'Documento', 'Tabla', 'Estrellas', 'Fecha']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [37, 117, 252] }
+        });
+
+        doc.save(`Resultados_SantaJuana_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+</script>
+</body>
+</html>
