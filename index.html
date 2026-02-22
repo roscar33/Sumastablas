@@ -2,190 +2,223 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Docente - Sede Santa Juana</title>
-    <!-- Librerías para PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estrellas Matemáticas - Sede Santa Juana 🌟</title>
     <style>
         :root {
-            --primary: #2575fc;
-            --secondary: #4facfe;
-            --danger: #ef5350;
-            --success: #66bb6a;
-            --dark: #333;
-            --light: #f8f9fa;
+            --azul-inicio: #4facfe;
+            --azul-medio: #00f2fe;
+            --amarillo-final: #f9d423;
+            --primario: #2575fc;
+            --exito: #66bb6a;
+            --error: #ef5350;
+            --blanco: #ffffff;
         }
 
+        /* Estilos Generales - Sin cursivas */
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-style: normal !important; /* Forzar que nada sea cursiva */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: #f0f2f5;
-            color: var(--dark);
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--azul-inicio) 0%, var(--azul-medio) 50%, var(--amarillo-final) 100%);
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #contenedor-app {
+            width: 94%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 40px;
+            padding: 35px 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            text-align: center;
+            position: relative;
+            border: 6px solid var(--blanco);
+        }
+
+        /* Pantallas */
+        .pantalla { display: none; flex-direction: column; align-items: center; animation: aparecer 0.4s ease-out; }
+        .pantalla.activa { display: flex; }
+
+        @keyframes aparecer { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        h1 { color: var(--primario); font-size: 1.8rem; margin: 10px 0 20px 0; font-weight: 800; text-transform: uppercase; }
+        .instruccion { color: #555; font-size: 1.1rem; margin-bottom: 25px; line-height: 1.4; }
+
+        /* Formulario de Ingreso */
+        input {
+            width: 100%;
             padding: 20px;
+            border-radius: 25px;
+            border: 3px solid #eee;
+            font-size: 1.4rem;
+            text-align: center;
+            outline: none;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
         }
+        input:focus { border-color: var(--primario); }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        .btn-accion {
+            background: var(--primario);
+            color: white;
+            border: none;
+            padding: 20px 30px;
+            border-radius: 30px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #1a56c5;
+            width: 100%;
+            transition: all 0.1s;
         }
+        .btn-accion:active { transform: translateY(4px); box-shadow: 0 4px 0 #1a56c5; }
+        .btn-accion:disabled { background: #999; box-shadow: 0 8px 0 #777; cursor: not-allowed; }
 
-        header {
+        /* HUD del Juego */
+        .marcador {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-
-        h1 { font-size: 1.5rem; color: var(--primary); }
-
-        .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-refresh { background: var(--primary); color: white; }
-        .btn-pdf { background: var(--dark); color: white; }
-        .btn-danger { background: var(--danger); color: white; font-size: 0.8rem; padding: 6px 12px; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .stat-card {
-            background: var(--light);
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 5px solid var(--primary);
-        }
-
-        .stat-card h3 { font-size: 0.8rem; text-transform: uppercase; color: #777; }
-        .stat-card p { font-size: 1.5rem; font-weight: bold; }
-
-        table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
+            margin-bottom: 15px;
+            font-weight: 800;
         }
+        .etiqueta { background: #f0f7ff; color: var(--primario); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; }
+        .estrellas-texto { color: #f57c00; font-size: 1.2rem; }
 
-        th {
-            background: var(--light);
-            text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #eee;
-            color: #555;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }
-
-        tr:hover { background-color: #fafafa; }
-
-        .actions { display: flex; gap: 5px; }
-
-        .loader {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .badge-tabla {
-            background: #e3f2fd;
-            color: var(--primary);
-            padding: 2px 8px;
+        .barra-tiempo {
+            width: 100%;
+            height: 16px;
+            background: #eee;
             border-radius: 10px;
-            font-weight: bold;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 2px solid #fff;
+        }
+        #progreso-tiempo {
+            width: 100%;
+            height: 100%;
+            background: var(--primario);
+            transition: width 1s linear;
         }
 
-        .stars-val { color: #f57c00; font-weight: bold; }
+        .operacion {
+            font-size: 5.5rem;
+            font-weight: 900;
+            color: #333;
+            margin: 10px 0;
+            text-shadow: 2px 2px 0 white;
+        }
+
+        .cuadricula-opciones {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+        .btn-opcion {
+            background: white;
+            border: 4px solid #f0f0f0;
+            border-radius: 30px;
+            padding: 25px 5px;
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: #444;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 5px 0 #ddd;
+        }
+        .btn-opcion.correcto { background: var(--exito) !important; color: white; border-color: #4caf50; box-shadow: 0 5px 0 #388e3c; }
+        .btn-opcion.error { background: var(--error) !important; color: white; border-color: #f44336; box-shadow: 0 5px 0 #d32f2f; }
+
+        #retroalimentacion { height: 40px; margin-top: 15px; font-weight: bold; font-size: 1.3rem; }
+
+        #control-sonido {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* Animaciones */
+        .vibrar { animation: vibracion 0.4s; }
+        @keyframes vibracion { 
+            0%, 100% { transform: translateX(0); } 
+            25%, 75% { transform: translateX(-10px); } 
+            50% { transform: translateX(10px); } 
+        }
+
+        .cargando {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primario);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: girar 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes girar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div>
-            <h1>Panel de Control Docente</h1>
-            <p style="color: #888; font-size: 0.85rem;">Seguimiento Estrellas Matemáticas - Sede Santa Juana</p>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn btn-refresh" id="btnSync">🔄 Sincronizar</button>
-            <button class="btn btn-pdf" id="btnPDF">📄 Descargar PDF</button>
-        </div>
-    </header>
+<div id="contenedor-app">
+    <button id="control-sonido">🔊</button>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Total Registros</h3>
-            <p id="stat-total">0</p>
-        </div>
-        <div class="stat-card" style="border-left-color: var(--success);">
-            <h3>Promedio Estrellas</h3>
-            <p id="stat-avg">0.0</p>
-        </div>
-        <div class="stat-card" style="border-left-color: var(--amarillo);">
-            <h3>Participantes</h3>
-            <p id="stat-students">0</p>
-        </div>
+    <!-- PORTADA / INGRESO -->
+    <div id="pantalla-inicio" class="pantalla activa">
+        <div style="font-size: 5rem; margin-bottom: 10px;">🎒</div>
+        <h1>SEDE SANTA JUANA</h1>
+        <p class="instruccion">¡Hola amiguito!<br>Escribe tu número de documento para comenzar a ganar estrellas.</p>
+        <input type="number" id="campo-documento" placeholder="Tu documento aquí">
+        <button class="btn-accion" id="btn-entrar">
+            <span id="texto-boton">¡ENTRAR A JUGAR! 🚀</span>
+        </button>
     </div>
 
-    <div id="loading" class="loader">Cargando datos de Firebase...</div>
+    <!-- JUEGO -->
+    <div id="pantalla-juego" class="pantalla">
+        <div class="marcador">
+            <div class="etiqueta">Tabla del <span id="txt-tabla">0</span></div>
+            <div class="estrellas-texto">✨ <span id="txt-estrellas">0.0</span></div>
+            <div class="etiqueta">Paso <span id="txt-paso">1</span>/10</div>
+        </div>
+        <div class="barra-tiempo"><div id="progreso-tiempo"></div></div>
+        <div id="saludo-nino" style="font-size: 1.2rem; color: #444; font-weight: 700; margin-bottom: 10px;"></div>
+        <div class="operacion" id="visual-operacion">0 + 0</div>
+        <div class="cuadricula-opciones" id="grid-respuestas"></div>
+        <div id="retroalimentacion"></div>
+    </div>
 
-    <div style="overflow-x: auto;">
-        <table id="resultsTable">
-            <thead>
-                <tr>
-                    <th>Estudiante</th>
-                    <th>Documento</th>
-                    <th>Tabla</th>
-                    <th>Estrellas</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Se llena con JS -->
-            </tbody>
-        </table>
-        <div id="emptyMsg" class="empty-state">No hay registros guardados en la colección SUMASTABLAS.</div>
+    <!-- FINAL / RESULTADOS -->
+    <div id="pantalla-final" class="pantalla">
+        <div style="font-size: 6rem;" id="emoji-final">🏆</div>
+        <h1 id="titulo-final">¡MUY BIEN!</h1>
+        <p id="resumen-final" style="font-size: 1.3rem; color: #333; margin-bottom: 20px;"></p>
+        <div id="estado-guardado" style="font-size: 0.9rem; color: #777; margin-bottom: 25px; min-height: 20px;"></div>
+        <button class="btn-accion" id="btn-continuar">SIGUIENTE NIVEL ➡️</button>
+        <button class="btn-accion" id="btn-salir" style="margin-top: 15px; background: #888; box-shadow: 0 8px 0 #555;">SALIR</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -200,125 +233,247 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const appId = 'santa-juana-sumas-final-v1'; // Debe coincidir con el del juego
+    const appId = 'santa-juana-sumas-final-v1';
 
-    let dataCache = [];
-
-    // Autenticación para acceder a Firestore
-    signInAnonymously(auth).then(() => fetchData()).catch(console.error);
-
-    document.getElementById('btnSync').onclick = fetchData;
-    document.getElementById('btnPDF').onclick = exportPDF;
-
-    async function fetchData() {
-        const body = document.getElementById('tableBody');
-        const loader = document.getElementById('loading');
-        const empty = document.getElementById('emptyMsg');
-
-        body.innerHTML = '';
-        loader.style.display = 'block';
-        empty.style.display = 'none';
-
-        try {
-            // Regla 1: Ruta absoluta. Colección SUMASTABLAS
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'SUMASTABLAS');
-            const snap = await getDocs(colRef);
-            
-            dataCache = [];
-            snap.forEach(d => {
-                dataCache.push({ id: d.id, ...d.data() });
-            });
-
-            // Ordenar por fecha (descendente) en memoria - Regla 2
-            dataCache.sort((a, b) => b.fecha?.seconds - a.fecha?.seconds);
-
-            loader.style.display = 'none';
-            
-            if (dataCache.length === 0) {
-                empty.style.display = 'block';
-                updateStats(0, 0, 0);
-                return;
-            }
-
-            let totalStars = 0;
-            const uniqueStudents = new Set();
-
-            dataCache.forEach(item => {
-                totalStars += item.estrellas || 0;
-                uniqueStudents.add(item.documento);
-
-                const row = document.createElement('tr');
-                const fecha = item.fecha ? new Date(item.fecha.seconds * 1000).toLocaleString() : '---';
-                
-                row.innerHTML = `
-                    <td><strong>${item.estudiante}</strong></td>
-                    <td>${item.documento}</td>
-                    <td><span class="badge-tabla">Tabla ${item.tabla}</span></td>
-                    <td><span class="stars-val">✨ ${item.estrellas.toFixed(1)}</span></td>
-                    <td style="color: #666; font-size: 0.8rem;">${fecha}</td>
-                    <td class="actions">
-                        <button class="btn btn-danger" onclick="window.resetTable('${item.id}')">Borrar Registro</button>
-                    </td>
-                `;
-                body.appendChild(row);
-            });
-
-            updateStats(dataCache.length, (totalStars / dataCache.length).toFixed(1), uniqueStudents.size);
-
-        } catch (e) {
-            console.error(e);
-            loader.style.display = 'none';
-            alert("Error al obtener datos. Revisa la conexión.");
-        }
-    }
-
-    function updateStats(total, avg, students) {
-        document.getElementById('stat-total').innerText = total;
-        document.getElementById('stat-avg').innerText = avg;
-        document.getElementById('stat-students').innerText = students;
-    }
-
-    // Función global para que el botón de la tabla la vea
-    window.resetTable = async function(docId) {
-        if (!confirm("¿Seguro que quieres borrar este registro? El estudiante tendrá que repetir esta tabla.")) return;
-        
-        try {
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'SUMASTABLAS', docId);
-            await deleteDoc(docRef);
-            fetchData(); // Recargar
-        } catch (e) {
-            alert("Error al borrar registro.");
-        }
+    const LISTA_ESTUDIANTES = {
+        "1072265248": "MELANIN PATRICIA FLOREZ POLO",
+        "1041636870": "MARIA JOSE GONZALEZ BETANCUR",
+        "1042155380": "JOSE LEANDRO GUTIERREZ CHAVARRIA",
+        "1041636641": "SEBASTIAN MARTINEZ MARTINEZ",
+        "1041636841": "LUCIANA VARELAS BARRIENTOS"
     };
 
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+    const estado = {
+        nino: null,
+        tablaActual: 0,
+        pasoActual: 0,
+        pasosAleatorios: [],
+        estrellas: 0.0,
+        segundos: 25,
+        relojId: null,
+        sonidoActivo: true,
+        bloqueado: false
+    };
 
-        doc.setFontSize(18);
-        doc.text("Reporte de Resultados - Sede Santa Juana", 14, 20);
-        doc.setFontSize(10);
-        doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
+    // Autenticación inicial
+    signInAnonymously(auth).catch(err => console.error("Error Auth:", err));
 
-        const tableData = dataCache.map(item => [
-            item.estudiante,
-            item.documento,
-            `Tabla ${item.tabla}`,
-            item.estrellas.toFixed(1),
-            item.fecha ? new Date(item.fecha.seconds * 1000).toLocaleDateString() : '---'
-        ]);
+    const UI = {
+        inicio: document.getElementById('pantalla-inicio'),
+        juego: document.getElementById('pantalla-juego'),
+        final: document.getElementById('pantalla-final'),
+        btnEntrar: document.getElementById('btn-entrar'),
+        txtBoton: document.getElementById('texto-boton'),
+        inputDoc: document.getElementById('campo-documento')
+    };
 
-        doc.autoTable({
-            startY: 35,
-            head: [['Estudiante', 'Documento', 'Tabla', 'Estrellas', 'Fecha']],
-            body: tableData,
-            theme: 'grid',
-            headStyles: { fillColor: [37, 117, 252] }
-        });
+    UI.btnEntrar.onclick = iniciarSesion;
+    document.getElementById('control-sonido').onclick = () => {
+        estado.sonidoActivo = !estado.sonidoActivo;
+        document.getElementById('control-sonido').innerText = estado.sonidoActivo ? '🔊' : '🔈';
+    };
+    document.getElementById('btn-salir').onclick = () => location.reload();
+    document.getElementById('btn-continuar').onclick = () => {
+        estado.tablaActual = (estado.tablaActual + 1) % 10;
+        comenzarReto();
+    };
 
-        doc.save(`Resultados_SantaJuana_${new Date().toISOString().slice(0,10)}.pdf`);
+    async function iniciarSesion() {
+        const id = UI.inputDoc.value.trim();
+        if (!LISTA_ESTUDIANTES[id]) {
+            alert("¡Ups! Ese número no está en la lista. Pide ayuda a tu profesor.");
+            return;
+        }
+
+        UI.txtBoton.innerHTML = `<span class="cargando"></span> Buscando tus estrellas...`;
+        UI.btnEntrar.disabled = true;
+
+        estado.nino = { id: id, nombre: LISTA_ESTUDIANTES[id] };
+
+        try {
+            // Regla 1: Ruta absoluta. Colección: SUMASTABLAS
+            const ruta = collection(db, 'artifacts', appId, 'public', 'data', 'SUMASTABLAS');
+            const snapshot = await getDocs(ruta);
+            
+            let tablaMasAlta = -1;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.documento === estado.nino.id) {
+                    if (data.tabla > tablaMasAlta) tablaMasAlta = data.tabla;
+                }
+            });
+
+            // Lógica de Persistencia: Siguiente tabla a la completada
+            estado.tablaActual = tablaMasAlta === -1 ? 0 : (tablaMasAlta + 1);
+            if (estado.tablaActual > 9) estado.tablaActual = 0;
+            
+            comenzarReto();
+        } catch (e) {
+            console.error("Falla al conectar:", e);
+            estado.tablaActual = 0; // Si falla, que juegue desde el inicio
+            comenzarReto();
+        }
     }
 
+    function comenzarReto() {
+        estado.pasoActual = 0;
+        estado.estrellas = 0;
+        estado.pasosAleatorios = Array.from({length: 10}, (_, i) => i).sort(() => Math.random() - 0.5);
+        
+        UI.inicio.classList.remove('activa');
+        UI.final.classList.remove('activa');
+        UI.juego.classList.add('activa');
+        
+        document.getElementById('saludo-nino').innerText = `¡Bienvenido, ${estado.nino.nombre.split(' ')[0]}! ✨`;
+        mostrarPregunta();
+    }
+
+    function mostrarPregunta() {
+        estado.bloqueado = false;
+        estado.segundos = 25;
+        actualizarBarraTiempo();
+        iniciarContador();
+
+        const t = estado.tablaActual;
+        const s = estado.pasosAleatorios[estado.pasoActual];
+        const correcta = t + s;
+
+        document.getElementById('txt-tabla').innerText = t;
+        document.getElementById('txt-paso').innerText = estado.pasoActual + 1;
+        document.getElementById('txt-estrellas').innerText = estado.estrellas.toFixed(1);
+        document.getElementById('visual-operacion').innerText = `${t} + ${s}`;
+        document.getElementById('retroalimentacion').innerText = "";
+
+        let opciones = [correcta];
+        while(opciones.length < 4) {
+            let azar = correcta + (Math.floor(Math.random() * 5) - 2);
+            if(azar < 0 || opciones.includes(azar)) azar = correcta + (opciones.length + 3);
+            if(!opciones.includes(azar)) opciones.push(azar);
+        }
+        opciones.sort(() => Math.random() - 0.5);
+
+        const grid = document.getElementById('grid-respuestas');
+        grid.innerHTML = '';
+        opciones.forEach(o => {
+            const b = document.createElement('button');
+            b.className = 'btn-opcion';
+            b.innerText = o;
+            b.onclick = () => procesarEleccion(o, b, correcta);
+            grid.appendChild(b);
+        });
+    }
+
+    function iniciarContador() {
+        clearInterval(estado.relojId);
+        estado.relojId = setInterval(() => {
+            estado.segundos--;
+            actualizarBarraTiempo();
+            if(estado.segundos <= 0) {
+                clearInterval(estado.relojId);
+                if(!estado.bloqueado) procesarEleccion(null, null, null, true);
+            }
+        }, 1000);
+    }
+
+    function actualizarBarraTiempo() {
+        const barra = document.getElementById('progreso-tiempo');
+        const porcentaje = (estado.segundos / 25) * 100;
+        barra.style.width = porcentaje + "%";
+        barra.style.background = estado.segundos < 8 ? 'var(--error)' : 'var(--primario)';
+    }
+
+    function procesarEleccion(valor, boton, correcta, esTiempo = false) {
+        if(estado.bloqueado) return;
+        estado.bloqueado = true;
+        clearInterval(estado.relojId);
+
+        const fb = document.getElementById('retroalimentacion');
+
+        if (!esTiempo && valor === correcta) {
+            estado.estrellas += 0.5;
+            boton.classList.add('correcto');
+            fb.innerText = "¡EXCELENTE! +0.5 Estrellas ✨";
+            fb.style.color = "var(--exito)";
+            emitirSonido(600, 0.1);
+            lanzarConfeti();
+        } else {
+            if(boton) boton.classList.add('error');
+            fb.innerText = esTiempo ? "¡TIEMPO AGOTADO! ⏰" : "¡INTÉNTALO OTRA VEZ! 💪";
+            fb.style.color = "var(--error)";
+            document.getElementById('contenedor-app').classList.add('vibrar');
+            setTimeout(() => document.getElementById('contenedor-app').classList.remove('vibrar'), 400);
+            emitirSonido(200, 0.2);
+        }
+
+        setTimeout(() => {
+            estado.pasoActual++;
+            if(estado.pasoActual < 10) mostrarPregunta();
+            else terminarNivel();
+        }, 1500);
+    }
+
+    async function terminarNivel() {
+        UI.juego.classList.remove('activa');
+        UI.final.classList.add('activa');
+        
+        const puntosFinales = estado.estrellas.toFixed(1);
+        document.getElementById('emoji-final').innerText = estado.estrellas >= 4 ? "🏆" : "🌟";
+        document.getElementById('titulo-final').innerText = `¡BRAVO, ${estado.nino.nombre.split(' ')[0]}!`;
+        document.getElementById('resumen-final').innerText = `Ganaste ${puntosFinales} Estrellas en la Tabla del ${estado.tablaActual}.`;
+        
+        const txtStatus = document.getElementById('estado-guardado');
+        txtStatus.innerText = "💾 Guardando tus estrellas...";
+
+        try {
+            // Regla 1: Colección obligatoria SUMASTABLAS
+            const ruta = collection(db, 'artifacts', appId, 'public', 'data', 'SUMASTABLAS');
+            await addDoc(ruta, {
+                estudiante: estado.nino.nombre,
+                documento: estado.nino.id,
+                estrellas: estado.estrellas,
+                tabla: estado.tablaActual,
+                fecha: new Date(),
+                sede: "Santa Juana"
+            });
+            txtStatus.innerText = "✅ ¡Estrellas guardadas con éxito!";
+        } catch (e) {
+            console.error(e);
+            txtStatus.innerText = "⚠️ No pudimos guardar, ¡pero lo hiciste muy bien!";
+        }
+    }
+
+    function emitirSonido(f, d) {
+        if(!estado.sonidoActivo) return;
+        try {
+            const c = new (window.AudioContext || window.webkitAudioContext)();
+            const o = c.createOscillator();
+            const g = c.createGain();
+            o.frequency.value = f;
+            o.connect(g);
+            g.connect(c.destination);
+            o.start();
+            g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + d);
+            o.stop(c.currentTime + d);
+        } catch(e) {}
+    }
+
+    function lanzarConfeti() {
+        for(let i=0; i<15; i++) {
+            const p = document.createElement('div');
+            p.style.position = 'absolute';
+            p.style.width = '12px'; p.style.height = '12px';
+            p.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 60%)`;
+            p.style.borderRadius = '50%';
+            p.style.left = '50%'; p.style.top = '50%';
+            p.style.pointerEvents = 'none';
+            document.body.appendChild(p);
+            p.animate([
+                { transform: 'translate(0,0) scale(1)', opacity: 1 },
+                { transform: `translate(${(Math.random()-0.5)*400}px, ${(Math.random()-0.5)*400}px) scale(0)`, opacity: 0 }
+            ], { duration: 1000 }).onfinish = () => p.remove();
+        }
+    }
 </script>
+
 </body>
 </html>
